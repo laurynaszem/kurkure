@@ -49,12 +49,6 @@
       margin-bottom: 10px;
     }
 
-    .subtitle {
-      color: rgba(255, 255, 255, 0.86);
-      margin-bottom: 20px;
-      line-height: 1.6;
-    }
-
     label {
       display: block;
       margin: 14px 0 6px;
@@ -156,13 +150,6 @@
       background: #dc2626;
     }
 
-    .helper {
-      font-size: 13px;
-      margin-top: 8px;
-      color: rgba(255, 255, 255, 0.78);
-      line-height: 1.4;
-    }
-
     @media (max-width: 900px) {
       .container {
         grid-template-columns: 1fr;
@@ -174,9 +161,6 @@
   <div class="container">
     <div class="card">
       <h1>Kemperio rezervacija</h1>
-      <p class="subtitle">
-        Pasirink žmogų ir rezervuok datas. Registracija nereikalinga.
-      </p>
 
       <form id="reservationForm">
         <label for="person">Pasirink žmogų</label>
@@ -195,8 +179,6 @@
 
         <label for="comment">Komentaras</label>
         <input type="text" id="comment" placeholder="Papildoma informacija..." />
-
-        <p class="helper">Negalima rezervuoti persidengiančių datų.</p>
 
         <button type="submit">Rezervuoti datas</button>
       </form>
