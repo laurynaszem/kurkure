@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kemperio rezervacija</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      color: #ffffff;
+      background:
+        linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
+        url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80') center center / cover no-repeat fixed;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.86);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      font-weight: bold;
+      color: #f8fafc;
+    }
+
+    select,
+    input,
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 15px;
+    }
+
+    select,
+    input {
+      background: rgba(255, 255, 255, 0.95);
+      color: #111827;
+    }
+
+    button {
+      margin-top: 18px;
+      background: #f59e0b;
+      color: #111827;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s ease;
+    }
+
+    button:hover {
+      background: #fbbf24;
+    }
+
+    .message {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 12px;
+      display: none;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .success {
+      background: rgba(34, 197, 94, 0.22);
+      color: #dcfce7;
+      border: 1px solid rgba(134, 239, 172, 0.35);
+    }
+
+    .error {
+      background: rgba(239, 68, 68, 0.22);
+      color: #fee2e2;
+      border: 1px solid rgba(252, 165, 165, 0.35);
+    }
+
+    .reservation-list {
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .reservation-item {
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .reservation-item h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .reservation-item p {
+      margin: 4px 0;
+      color: rgba(255, 255, 255, 0.88);
+      line-height: 1.5;
+    }
+
+    .empty {
+      color: rgba(255, 255, 255, 0.82);
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      border: 1px dashed rgba(255, 255, 255, 0.24);
+    }
+
+    .delete-btn {
+      margin-top: 12px;
+      background: #ef4444;
+      color: white;
+    }
+
+    .delete-btn:hover {
+      background: #dc2626;
+    }
+
+    .helper {
+      font-size: 13px;
+      margin-top: 8px;
+      color: rgba(255, 255, 255, 0.78);
+      line-height: 1.4;
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Kemperio rezervacija</h1>
+      <p class="subtitle">
+        Pasirink žmogų ir rezervuok datas. Registracija nereikalinga.
+      </p>
+
+      <form id="reservationForm">
+        <label for="person">Pasirink žmogų</label>
+        <select id="person" required>
+          <option value="">-- Pasirink --</option>
+          <option value="Mykolas">Mykolas</option>
+          <option value="Laurynas">Laurynas</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <label for="startDate">Nuo</label>
+        <input type="date" id="startDate" required />
+
+        <label for="endDate">Iki</label>
+        <input type="date" id="endDate" required />
+
+        <label for="comment">Komentaras</label>
+        <input type="text" id="comment" placeholder="Papildoma informacija..." />
+
+        <p class="helper">Negalima rezervuoti persidengiančių datų.</p>
+
+        <button type="submit">Rezervuoti datas</button>
+      </form>
+
+      <div id="message" class="message"></div>
+    </div>
+
+    <div class="card">
+      <h2>Esamos rezervacijos</h2>
+      <p class="subtitle">Visi matys tas pačias rezervacijas tik tame pačiame naršyklės įrenginyje.</p>
+      <div id="reservationList" class="reservation-list"></div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('reservationForm');
+    const reservationList = document.getElementById('reservationList');
+    const messageBox = document.getElementById('message');
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+
+    const today = new Date().toISOString().split('T')[0];
+    startDateInput.min = today;
+    endDateInput.min = today;
+
+    function getReservations() {
+      return JSON.parse(localStorage.getItem('camperReservations') || '[]');
+    }
+
+    function saveReservations(reservations) {
+      localStorage.setItem('camperReservations', JSON.stringify(reservations));
+    }
+
+    function showMessage(text, type) {
+      messageBox.textContent = text;
+      messageBox.className = 'message ' + type;
+      messageBox.style.display = 'block';
+
+      setTimeout(function() {
+        messageBox.style.display = 'none';
+      }, 3500);
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('lt-LT', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+
+    function datesOverlap(start1, end1, start2, end2) {
+      return start1 <= end2 && start2 <= end1;
+    }
+
+    function renderReservations() {
+      const reservations = getReservations();
+      reservationList.innerHTML = '';
+
+      if (reservations.length === 0) {
+        reservationList.innerHTML = '<div class="empty">Kol kas rezervacijų nėra.</div>';
+        return;
+      }
+
+      reservations
+        .sort(function(a, b) {
+          return new Date(a.startDate) - new Date(b.startDate);
+        })
+        .forEach(function(reservation, index) {
+          const item = document.createElement('div');
+          item.className = 'reservation-item';
+          item.innerHTML = `
+            <h3>${reservation.person}</h3>
+            <p><strong>Nuo:</strong> ${formatDate(reservation.startDate)}</p>
+            <p><strong>Iki:</strong> ${formatDate(reservation.endDate)}</p>
+            <p><strong>Komentaras:</strong> ${reservation.comment || 'Nėra'}</p>
+            <button class="delete-btn" onclick="deleteReservation(${index})">Ištrinti</button>
+          `;
+          reservationList.appendChild(item);
+        });
+    }
+
+    function deleteReservation(index) {
+      const reservations = getReservations();
+      reservations.splice(index, 1);
+      saveReservations(reservations);
+      renderReservations();
+      showMessage('Rezervacija ištrinta.', 'success');
+    }
+
+    startDateInput.addEventListener('change', function() {
+      endDateInput.min = startDateInput.value || today;
+      if (endDateInput.value && endDateInput.value < startDateInput.value) {
+        endDateInput.value = '';
+      }
+    });
+
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const person = document.getElementById('person').value;
+      const startDate = startDateInput.value;
+      const endDate = endDateInput.value;
+      const comment = document.getElementById('comment').value.trim();
+
+      if (!person || !startDate || !endDate) {
+        showMessage('Užpildyk visus laukus.', 'error');
+        return;
+      }
+
+      if (endDate < startDate) {
+        showMessage('Pabaigos data negali būti ankstesnė už pradžios datą.', 'error');
+        return;
+      }
+
+      const reservations = getReservations();
+      const hasConflict = reservations.some(function(reservation) {
+        return datesOverlap(startDate, endDate, reservation.startDate, reservation.endDate);
+      });
+
+      if (hasConflict) {
+        showMessage('Šios datos jau užimtos.', 'error');
+        return;
+      }
+
+      const newReservation = {
+        person: person,
+        startDate: startDate,
+        endDate: endDate,
+        comment: comment
+      };
+
+      reservations.push(newReservation);
+      saveReservations(reservations);
+      renderReservations();
+      form.reset();
+      startDateInput.min = today;
+      endDateInput.min = today;
+
+      showMessage('Rezervacija sėkmingai išsaugota.', 'success');
+    });
+
+    renderReservations();
+  </script>
+</body>
+</html>
