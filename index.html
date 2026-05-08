@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kemperio rezervacija</title>
+
   <style>
     * {
       box-sizing: border-box;
@@ -17,7 +18,8 @@
       color: #ffffff;
       background:
         linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
-        url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80') center center / cover no-repeat fixed;
+        url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80')
+        center center / cover no-repeat fixed;
       padding: 24px;
     }
 
@@ -41,12 +43,12 @@
 
     h1 {
       font-size: 32px;
-      margin-bottom: 10px;
+      margin-bottom: 20px;
     }
 
     h2 {
       font-size: 24px;
-      margin-bottom: 10px;
+      margin-bottom: 16px;
     }
 
     label {
@@ -157,12 +159,15 @@
     }
   </style>
 </head>
+
 <body>
   <div class="container">
+
     <div class="card">
       <h1>Kemperio rezervacija</h1>
 
       <form id="reservationForm">
+
         <label for="person">Pasirink žmogų</label>
         <select id="person" required>
           <option value="">-- Pasirink --</option>
@@ -181,6 +186,7 @@
         <input type="text" id="comment" placeholder="Papildoma informacija..." />
 
         <button type="submit">Rezervuoti datas</button>
+
       </form>
 
       <div id="message" class="message"></div>
@@ -190,138 +196,287 @@
       <h2>Esamos rezervacijos</h2>
       <div id="reservationList" class="reservation-list"></div>
     </div>
+
   </div>
 
-  <script>
-    const form = document.getElementById('reservationForm');
-    const reservationList = document.getElementById('reservationList');
-    const messageBox = document.getElementById('message');
-    const startDateInput = document.getElementById('startDate');
-    const endDateInput = document.getElementById('endDate');
+  <script type="module">
 
-    const today = new Date().toISOString().split('T')[0];
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      deleteDoc,
+      doc,
+      query,
+      orderBy,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBCz7h7wKuigNLIwOwBjVdQtzmUENHNHgA",
+      authDomain: "kalendorius-fbd2a.firebaseapp.com",
+      projectId: "kalendorius-fbd2a",
+      storageBucket: "kalendorius-fbd2a.firebasestorage.app",
+      messagingSenderId: "350657322462",
+      appId: "1:350657322462:web:8c04fa113338d7d324514f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+
+    const db = getFirestore(app);
+
+    const reservationsRef = collection(db, "reservations");
+
+    const form = document.getElementById("reservationForm");
+    const reservationList = document.getElementById("reservationList");
+    const messageBox = document.getElementById("message");
+
+    const startDateInput = document.getElementById("startDate");
+    const endDateInput = document.getElementById("endDate");
+
+    const today = new Date().toISOString().split("T")[0];
+
     startDateInput.min = today;
     endDateInput.min = today;
 
-    function getReservations() {
-      return JSON.parse(localStorage.getItem('camperReservations') || '[]');
-    }
-
-    function saveReservations(reservations) {
-      localStorage.setItem('camperReservations', JSON.stringify(reservations));
-    }
+    let liveReservations = [];
 
     function showMessage(text, type) {
-      messageBox.textContent = text;
-      messageBox.className = 'message ' + type;
-      messageBox.style.display = 'block';
 
-      setTimeout(function() {
-        messageBox.style.display = 'none';
+      messageBox.textContent = text;
+      messageBox.className = "message " + type;
+      messageBox.style.display = "block";
+
+      setTimeout(function () {
+        messageBox.style.display = "none";
       }, 3500);
     }
 
     function formatDate(dateString) {
+
       const date = new Date(dateString);
-      return date.toLocaleDateString('lt-LT', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+
+      return date.toLocaleDateString("lt-LT", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
       });
     }
 
     function datesOverlap(start1, end1, start2, end2) {
+
       return start1 <= end2 && start2 <= end1;
     }
 
-    function renderReservations() {
-      const reservations = getReservations();
-      reservationList.innerHTML = '';
+    function renderReservations(reservations) {
+
+      reservationList.innerHTML = "";
 
       if (reservations.length === 0) {
-        reservationList.innerHTML = '<div class="empty">Kol kas rezervacijų nėra.</div>';
+
+        reservationList.innerHTML =
+          '<div class="empty">Kol kas rezervacijų nėra.</div>';
+
         return;
       }
 
-      reservations
-        .sort(function(a, b) {
-          return new Date(a.startDate) - new Date(b.startDate);
-        })
-        .forEach(function(reservation, index) {
-          const item = document.createElement('div');
-          item.className = 'reservation-item';
-          item.innerHTML = `
-            <h3>${reservation.person}</h3>
-            <p><strong>Nuo:</strong> ${formatDate(reservation.startDate)}</p>
-            <p><strong>Iki:</strong> ${formatDate(reservation.endDate)}</p>
-            <p><strong>Komentaras:</strong> ${reservation.comment || 'Nėra'}</p>
-            <button class="delete-btn" onclick="deleteReservation(${index})">Ištrinti</button>
-          `;
-          reservationList.appendChild(item);
+      reservations.forEach(function (reservation) {
+
+        const item = document.createElement("div");
+
+        item.className = "reservation-item";
+
+        item.innerHTML = `
+          <h3>${reservation.person}</h3>
+
+          <p><strong>Nuo:</strong>
+          ${formatDate(reservation.startDate)}</p>
+
+          <p><strong>Iki:</strong>
+          ${formatDate(reservation.endDate)}</p>
+
+          <p><strong>Komentaras:</strong>
+          ${reservation.comment || "Nėra"}</p>
+
+          <button class="delete-btn"
+          data-id="${reservation.id}">
+          Ištrinti
+          </button>
+        `;
+
+        reservationList.appendChild(item);
+      });
+
+      document.querySelectorAll(".delete-btn")
+      .forEach(function (button) {
+
+        button.addEventListener("click", async function () {
+
+          const id = button.getAttribute("data-id");
+
+          try {
+
+            await deleteDoc(doc(db, "reservations", id));
+
+            showMessage(
+              "Rezervacija ištrinta.",
+              "success"
+            );
+
+          } catch (error) {
+
+            showMessage(
+              "Nepavyko ištrinti rezervacijos.",
+              "error"
+            );
+
+            console.error(error);
+          }
         });
+      });
     }
 
-    function deleteReservation(index) {
-      const reservations = getReservations();
-      reservations.splice(index, 1);
-      saveReservations(reservations);
-      renderReservations();
-      showMessage('Rezervacija ištrinta.', 'success');
-    }
+    startDateInput.addEventListener("change", function () {
 
-    startDateInput.addEventListener('change', function() {
-      endDateInput.min = startDateInput.value || today;
-      if (endDateInput.value && endDateInput.value < startDateInput.value) {
-        endDateInput.value = '';
+      endDateInput.min =
+        startDateInput.value || today;
+
+      if (
+        endDateInput.value &&
+        endDateInput.value < startDateInput.value
+      ) {
+        endDateInput.value = "";
       }
     });
 
-    form.addEventListener('submit', function(event) {
+    const reservationsQuery =
+      query(
+        reservationsRef,
+        orderBy("startDate", "asc")
+      );
+
+    onSnapshot(
+      reservationsQuery,
+
+      function (snapshot) {
+
+        liveReservations =
+          snapshot.docs.map(function (docItem) {
+
+            return {
+              id: docItem.id,
+              ...docItem.data()
+            };
+          });
+
+        renderReservations(liveReservations);
+      },
+
+      function (error) {
+
+        reservationList.innerHTML =
+          '<div class="empty">Nepavyko užkrauti rezervacijų.</div>';
+
+        console.error(error);
+      }
+    );
+
+    form.addEventListener("submit", async function (event) {
+
       event.preventDefault();
 
-      const person = document.getElementById('person').value;
-      const startDate = startDateInput.value;
-      const endDate = endDateInput.value;
-      const comment = document.getElementById('comment').value.trim();
+      const person =
+        document.getElementById("person").value;
+
+      const startDate =
+        startDateInput.value;
+
+      const endDate =
+        endDateInput.value;
+
+      const comment =
+        document.getElementById("comment")
+        .value
+        .trim();
 
       if (!person || !startDate || !endDate) {
-        showMessage('Užpildyk visus laukus.', 'error');
+
+        showMessage(
+          "Užpildyk visus laukus.",
+          "error"
+        );
+
         return;
       }
 
       if (endDate < startDate) {
-        showMessage('Pabaigos data negali būti ankstesnė už pradžios datą.', 'error');
+
+        showMessage(
+          "Pabaigos data negali būti ankstesnė už pradžios datą.",
+          "error"
+        );
+
         return;
       }
 
-      const reservations = getReservations();
-      const hasConflict = reservations.some(function(reservation) {
-        return datesOverlap(startDate, endDate, reservation.startDate, reservation.endDate);
-      });
+      const hasConflict =
+        liveReservations.some(function (reservation) {
+
+          return datesOverlap(
+            startDate,
+            endDate,
+            reservation.startDate,
+            reservation.endDate
+          );
+        });
 
       if (hasConflict) {
-        showMessage('Šios datos jau užimtos.', 'error');
+
+        showMessage(
+          "Šios datos jau užimtos.",
+          "error"
+        );
+
         return;
       }
 
-      const newReservation = {
-        person: person,
-        startDate: startDate,
-        endDate: endDate,
-        comment: comment
-      };
+      try {
 
-      reservations.push(newReservation);
-      saveReservations(reservations);
-      renderReservations();
-      form.reset();
-      startDateInput.min = today;
-      endDateInput.min = today;
+        await addDoc(
+          reservationsRef,
+          {
+            person: person,
+            startDate: startDate,
+            endDate: endDate,
+            comment: comment,
+            createdAt: new Date().toISOString()
+          }
+        );
 
-      showMessage('Rezervacija sėkmingai išsaugota.', 'success');
+        form.reset();
+
+        startDateInput.min = today;
+        endDateInput.min = today;
+
+        showMessage(
+          "Rezervacija sėkmingai išsaugota.",
+          "success"
+        );
+
+      } catch (error) {
+
+        showMessage(
+          "Nepavyko išsaugoti rezervacijos.",
+          "error"
+        );
+
+        console.error(error);
+      }
     });
 
-    renderReservations();
   </script>
 </body>
 </html>
+
